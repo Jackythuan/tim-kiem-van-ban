@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tìm chữ trong Hồ sơ — PDF &amp; Ảnh</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16233a;
+    --ink-2:#1c2c47;
+    --paper:#eef1e6;
+    --paper-2:#f7f8f2;
+    --seal:#a8382f;
+    --seal-2:#c94f41;
+    --gold:#b8912e;
+    --text:#20281f;
+    --text-dim:#5b6456;
+    --line: rgba(22,35,58,0.14);
+    --ok:#3f7a4f;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1200px 700px at 85% -10%, #223354 0%, transparent 60%),
+      var(--ink);
+    min-height:100vh;
+    font-family:'Inter',sans-serif;
+    color:var(--text);
+  }
+  .wrap{
+    max-width:960px;
+    margin:0 auto;
+    padding:36px 20px 80px;
+  }
+  .masthead{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:20px;
+    margin-bottom:28px;
+    color:var(--paper-2);
+  }
+  .masthead h1{
+    font-family:'Source Serif 4', serif;
+    font-weight:700;
+    font-size:clamp(28px,4vw,38px);
+    line-height:1.15;
+    margin:0 0 6px;
+    letter-spacing:-0.01em;
+  }
+  .masthead .eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--gold);
+    margin-bottom:10px;
+    display:block;
+  }
+  .masthead p{
+    margin:0;
+    color:#c7cfda;
+    font-size:14.5px;
+    max-width:480px;
+    line-height:1.55;
+  }
+  .stamp{
+    flex:0 0 auto;
+    width:74px;height:74px;
+    border-radius:50%;
+    border:2.5px solid var(--seal);
+    color:var(--seal);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Source Serif 4',serif;
+    font-weight:700;
+    font-size:11px;
+    text-align:center;
+    line-height:1.3;
+    transform:rotate(-8deg);
+    opacity:.85;
+    letter-spacing:.02em;
+    padding:6px;
+  }
+
+  .card{
+    background:var(--paper);
+    border-radius:10px;
+    box-shadow:0 20px 50px -25px rgba(0,0,0,.6);
+    overflow:hidden;
+    border:1px solid rgba(0,0,0,.06);
+  }
+
+  .upload{
+    padding:26px;
+    border-bottom:1px dashed var(--line);
+  }
+  .drop{
+    border:2px dashed rgba(22,35,58,.28);
+    border-radius:8px;
+    padding:26px 20px;
+    text-align:center;
+    cursor:pointer;
+    transition:.15s;
+    background:var(--paper-2);
+  }
+  .drop:hover, .drop.drag{
+    border-color:var(--seal);
+    background:#fbf3ec;
+  }
+  .drop b{font-family:'Source Serif 4',serif;font-size:16px;}
+  .drop .hint{color:var(--text-dim);font-size:13px;margin-top:6px;}
+  input[type=file]{display:none;}
+
+  .filelist{padding:0 26px;}
+  .filerow{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:14px 0;
+    border-bottom:1px solid var(--line);
+  }
+  .filerow:last-child{border-bottom:none;}
+  .tab{
+    flex:0 0 auto;
+    width:34px;height:34px;
+    border-radius:6px;
+    background:var(--ink);
+    color:var(--paper-2);
+    display:flex;align-items:center;justify-content:center;
+    font-size:15px;
+  }
+  .fmeta{flex:1;min-width:0;}
+  .fname{
+    font-weight:600;font-size:14.5px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .fsub{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11.5px;color:var(--text-dim);margin-top:2px;
+  }
+  .fstatus{
+    flex:0 0 auto;
+    font-size:12px;
+    font-family:'JetBrains Mono',monospace;
+    padding:4px 9px;
+    border-radius:20px;
+    white-space:nowrap;
+  }
+  .fstatus.wait{background:#e4e6da;color:#6b7160;}
+  .fstatus.busy{background:#fdecd8;color:#9a6110;}
+  .fstatus.done{background:#e2efe3;color:var(--ok);}
+  .fstatus.err{background:#f8dedb;color:var(--seal);}
+  .fbar{
+    height:3px;background:#dcdfd2;border-radius:3px;overflow:hidden;margin-top:7px;
+  }
+  .fbar i{display:block;height:100%;background:var(--seal);width:0%;transition:width .25s;}
+  .frm{
+    flex:0 0 auto;border:none;background:none;color:var(--text-dim);
+    cursor:pointer;font-size:16px;padding:4px 6px;
+  }
+  .frm:hover{color:var(--seal);}
+
+  .searchbar{
+    padding:22px 26px;
+    background:var(--ink);
+  }
+  .searchbox{
+    display:flex;align-items:center;gap:10px;
+    background:var(--paper-2);
+    border-radius:8px;
+    padding:0 6px 0 16px;
+    border:1px solid transparent;
+  }
+  .searchbox.focus{border-color:var(--gold);}
+  .searchbox svg{flex:0 0 auto;opacity:.55;}
+  .searchbox input{
+    flex:1;border:none;background:none;outline:none;
+    font-family:'Source Serif 4',serif;
+    font-size:18px;padding:13px 0;color:var(--text);
+  }
+  .searchbox input::placeholder{color:#8b9184;font-family:'Inter',sans-serif;font-size:15px;}
+  .navbtns{display:flex;align-items:center;gap:2px;flex:0 0 auto;}
+  .navbtns button{
+    border:none;background:none;color:var(--text-dim);
+    font-size:14px;padding:8px 9px;cursor:pointer;border-radius:6px;
+  }
+  .navbtns button:hover{background:#e6e8dc;color:var(--ink);}
+  .navcount{
+    font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-dim);
+    padding:0 4px;white-space:nowrap;
+  }
+  .toggles{
+    display:flex;gap:16px;margin-top:12px;flex-wrap:wrap;
+  }
+  .toggles label{
+    display:flex;align-items:center;gap:6px;
+    font-size:12.5px;color:#c7cfda;cursor:pointer;
+    user-select:none;
+  }
+  .toggles input{accent-color:var(--seal);}
+
+  .results{padding:22px 26px 8px;}
+  .results-empty{
+    text-align:center;color:var(--text-dim);padding:40px 10px 34px;
+    font-size:14px;
+  }
+  .results-empty b{display:block;color:var(--text);font-family:'Source Serif 4',serif;font-size:17px;margin-bottom:6px;}
+  .summary{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;color:var(--text-dim);
+    margin-bottom:14px;
+    padding-bottom:12px;border-bottom:1px solid var(--line);
+  }
+  .group{margin-bottom:6px;}
+  .grouphead{
+    display:flex;align-items:center;gap:8px;
+    font-size:12.5px;font-weight:600;color:var(--ink-2);
+    margin:16px 0 8px;
+  }
+  .grouphead .n{
+    background:var(--ink);color:var(--paper-2);
+    border-radius:20px;font-size:10.5px;padding:1px 8px;
+    font-family:'JetBrains Mono',monospace;font-weight:400;
+  }
+  .hit{
+    background:var(--paper-2);
+    border-radius:7px;
+    padding:11px 14px;
+    margin-bottom:8px;
+    cursor:pointer;
+    border:1px solid transparent;
+    transition:.12s;
+  }
+  .hit:hover{border-color:var(--line);}
+  .hit.active{border-color:var(--seal);background:#fbf3ec;}
+  .hit .loc{
+    font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-dim);
+    margin-bottom:4px;
+  }
+  .hit .snip{font-size:13.5px;line-height:1.55;}
+  .hit .snip mark{
+    background:#f3d9a6;color:var(--ink);
+    padding:0 2px;border-radius:2px;
+  }
+  .hit.active .snip mark.cur{
+    background:var(--seal);color:#fff;
+  }
+  .full{
+    margin-top:9px;padding-top:9px;border-top:1px dashed var(--line);
+    font-size:13px;line-height:1.7;color:var(--text);
+    max-height:260px;overflow:auto;white-space:pre-wrap;
+  }
+  .full mark{background:#f3d9a6;padding:0 2px;border-radius:2px;}
+
+  .footer-note{
+    text-align:center;color:#8792a3;font-size:11.5px;margin-top:22px;line-height:1.7;
+  }
+  .footer-note a{color:#b6c1d6;}
+
+  ::-webkit-scrollbar{width:9px;height:9px;}
+  ::-webkit-scrollbar-thumb{background:#c9cdbd;border-radius:5px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="masthead">
+    <div>
+      <span class="eyebrow">Ctrl+F cho mọi loại tài liệu</span>
+      <h1>Tìm chữ trong Hồ sơ</h1>
+      <p>Tải lên nhiều file PDF và ảnh — công cụ tự đọc chữ (kể cả bản scan) rồi cho bạn tìm kiếm như Ctrl+F, ngay trên trình duyệt, không gửi dữ liệu ra ngoài.</p>
+    </div>
+    <div class="stamp">ĐÃ<br>ĐỌC<br>XONG</div>
+  </div>
+
+  <div class="card">
+
+    <div class="upload">
+      <div class="drop" id="drop">
+        <b>Thả file vào đây, hoặc bấm để chọn</b>
+        <div class="hint">Hỗ trợ: PDF (kể cả bản scan), JPG, PNG, WEBP — chọn được nhiều file cùng lúc</div>
+        <input type="file" id="fileInput" multiple accept=".pdf,.jpg,.jpeg,.png,.webp,image/*,application/pdf">
+      </div>
+    </div>
+
+    <div class="filelist" id="filelist"></div>
+
+    <div class="searchbar">
+      <div class="searchbox" id="searchbox">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#eef1e6" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.6" y2="16.6"/></svg>
+        <input type="text" id="searchInput" placeholder="Nhập từ khoá cần tìm trong tất cả file đã tải…" autocomplete="off">
+        <div class="navbtns" id="navbtns" style="display:none;">
+          <span class="navcount" id="navcount">0/0</span>
+          <button id="prevBtn" title="Kết quả trước">‹</button>
+          <button id="nextBtn" title="Kết quả sau">›</button>
+        </div>
+      </div>
+      <div class="toggles">
+        <label><input type="checkbox" id="ignoreDiacritics"> Tìm không phân biệt dấu (vd: "thon" ra cả "thôn")</label>
+        <label><input type="checkbox" id="matchCase"> Phân biệt hoa/thường</label>
+      </div>
+    </div>
+
+    <div class="results" id="results">
+      <div class="results-empty">
+        <b>Chưa có kết quả</b>
+        Tải file lên và nhập từ khoá để bắt đầu tìm kiếm.
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer-note">
+    Toàn bộ xử lý (đọc PDF, nhận diện chữ trong ảnh) diễn ra ngay trong trình duyệt của bạn — file không được tải lên bất kỳ máy chủ nào.<br>
+    Lần đầu dùng cần Internet để tải mô hình nhận diện chữ (~vài chục MB), các lần sau sẽ nhanh hơn nhờ bộ nhớ đệm.
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/legacy/build/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/legacy/build/pdf.worker.min.js";
+
+  const dropEl = document.getElementById('drop');
+  const fileInput = document.getElementById('fileInput');
+  const filelistEl = document.getElementById('filelist');
+  const searchInput = document.getElementById('searchInput');
+  const searchbox = document.getElementById('searchbox');
+  const resultsEl = document.getElementById('results');
+  const ignoreDiacriticsEl = document.getElementById('ignoreDiacritics');
+  const matchCaseEl = document.getElementById('matchCase');
+  const navbtns = document.getElementById('navbtns');
+  const navcount = document.getElementById('navcount');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+
+  let docs = [];      // {id, name, kind, status, pages:[{page,text,source}], progressText}
+  let docSeq = 0;
+  let ocrWorker = null;
+  let ocrWorkerReady = null;
+  let queue = [];
+  let processing = false;
+
+  let currentHits = []; // flat list of {docId, page, snippetStart}
+  let currentIdx = -1;
+
+  const vnMap = {
+    'à':'a','á':'a','ả':'a','ã':'a','ạ':'a','ă':'a','ằ':'a','ắ':'a','ẳ':'a','ẵ':'a','ặ':'a',
+    'â':'a','ầ':'a','ấ':'a','ẩ':'a','ẫ':'a','ậ':'a',
+    'è':'e','é':'e','ẻ':'e','ẽ':'e','ẹ':'e','ê':'e','ề':'e','ế':'e','ể':'e','ễ':'e','ệ':'e',
+    'ì':'i','í':'i','ỉ':'i','ĩ':'i','ị':'i',
+    'ò':'o','ó':'o','ỏ':'o','õ':'o','ọ':'o','ô':'o','ồ':'o','ố':'o','ổ':'o','ỗ':'o','ộ':'o',
+    'ơ':'o','ờ':'o','ớ':'o','ở':'o','ỡ':'o','ợ':'o',
+    'ù':'u','ú':'u','ủ':'u','ũ':'u','ụ':'u','ư':'u','ừ':'u','ứ':'u','ử':'u','ữ':'u','ự':'u',
+    'ỳ':'y','ý':'y','ỷ':'y','ỹ':'y','ỵ':'y','đ':'d'
+  };
+
+  function norm(str, ignoreCase, ignoreDia){
+    let s = str;
+    if(ignoreCase) s = s.toLowerCase();
+    if(ignoreDia){
+      s = s.split('').map(function(ch){
+        var lower = ch.toLowerCase();
+        var mapped = vnMap[lower];
+        if(!mapped) return ch;
+        return ignoreCase ? mapped : (ch === lower ? mapped : mapped.toUpperCase());
+      }).join('');
+    }
+    return s;
+  }
+
+  function esc(s){
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // Ghép các mảnh chữ PDF lại theo vị trí thực tế, tránh việc mỗi ký tự
+  // bị coi là một "từ" riêng (lỗi thường gặp với PDF xuất từ Word có dấu tiếng Việt).
+  function buildTextFromItems(tc){
+    let out = '';
+    let lastY = null;
+    let lastEndX = null;
+    tc.items.forEach(function(item){
+      const str = item.str;
+      if(str === undefined || str === null) return;
+      const tx = item.transform || [1,0,0,1,0,0];
+      const x = tx[4], y = tx[5];
+      const fontSize = Math.hypot(tx[2], tx[3]) || Math.hypot(tx[0], tx[1]) || 10;
+      if(str === ''){
+        // mục trống thường biểu thị một khoảng trắng
+        out += ' ';
+      } else {
+        if(lastY !== null){
+          if(Math.abs(y - lastY) > fontSize * 0.4){
+            out += '\n';
+          } else if(lastEndX !== null && (x - lastEndX) > fontSize * 0.22){
+            out += ' ';
+          }
+        }
+        out += str;
+      }
+      lastY = y;
+      lastEndX = x + (item.width || 0);
+      if(item.hasEOL){
+        out += '\n';
+        lastY = null;
+        lastEndX = null;
+      }
+    });
+    return out;
+  }
+
+  // ---------- File intake ----------
+  dropEl.addEventListener('click', function(){ fileInput.click(); });
+  dropEl.addEventListener('dragover', function(e){ e.preventDefault(); dropEl.classList.add('drag'); });
+  dropEl.addEventListener('dragleave', function(){ dropEl.classList.remove('drag'); });
+  dropEl.addEventListener('drop', function(e){
+    e.preventDefault(); dropEl.classList.remove('drag');
+    handleFiles(e.dataTransfer.files);
+  });
+  fileInput.addEventListener('change', function(){
+    handleFiles(fileInput.files);
+    fileInput.value = '';
+  });
+
+  function handleFiles(fileList){
+    Array.from(fileList).forEach(function(file){
+      const kind = file.type === 'application/pdf' || /\.pdf$/i.test(file.name) ? 'pdf' : 'image';
+      const doc = {
+        id: 'd' + (++docSeq),
+        name: file.name,
+        kind: kind,
+        status: 'wait',
+        pages: [],
+        progressText: 'Đang chờ…',
+        file: file
+      };
+      docs.push(doc);
+      queue.push(doc);
+    });
+    renderFileList();
+    runQueue();
+  }
+
+  function removeDoc(id){
+    docs = docs.filter(function(d){ return d.id !== id; });
+    renderFileList();
+    runSearch();
+  }
+
+  // ---------- Processing ----------
+  async function getWorker(){
+    if(ocrWorker) return ocrWorker;
+    if(!ocrWorkerReady){
+      ocrWorkerReady = Tesseract.createWorker('vie+eng').then(function(w){
+        ocrWorker = w;
+        return w;
+      });
+    }
+    return ocrWorkerReady;
+  }
+
+  async function runQueue(){
+    if(processing) return;
+    processing = true;
+    while(queue.length){
+      const doc = queue.shift();
+      try{
+        await processDoc(doc);
+        doc.status = 'done';
+        doc.progressText = doc.pages.length + (doc.kind === 'pdf' ? ' trang · ' : ' · ') +
+          doc.pages.reduce(function(a,p){return a + p.text.length;},0) + ' ký tự';
+      }catch(err){
+        doc.status = 'err';
+        doc.progressText = 'Lỗi: ' + (err && err.message ? err.message : 'không đọc được file');
+      }
+      renderFileList();
+      runSearch();
+    }
+    processing = false;
+  }
+
+  async function processDoc(doc){
+    doc.status = 'busy';
+    if(doc.kind === 'pdf'){
+      doc.progressText = 'Đang mở PDF…';
+      renderFileList();
+      const buf = await doc.file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+      const n = pdf.numPages;
+      for(let p = 1; p <= n; p++){
+        doc.progressText = 'Trang ' + p + '/' + n;
+        doc.progressPct = Math.round(((p-1)/n)*100);
+        renderFileList();
+        const page = await pdf.getPage(p);
+        const tc = await page.getTextContent();
+        const rawText = buildTextFromItems(tc).replace(/[ \t]+/g,' ').replace(/ *\n */g,'\n').trim();
+        if(rawText.length > 15){
+          doc.pages.push({ page: p, text: rawText, source: 'text' });
+        } else {
+          doc.progressText = 'Trang ' + p + '/' + n + ' (đang OCR bản scan…)';
+          renderFileList();
+          const viewport = page.getViewport({ scale: 2 });
+          const canvas = document.createElement('canvas');
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          const ctx = canvas.getContext('2d');
+          await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+          const worker = await getWorker();
+          const result = await worker.recognize(canvas);
+          doc.pages.push({ page: p, text: (result.data.text || '').trim(), source: 'ocr' });
+        }
+        doc.progressPct = Math.round((p/n)*100);
+      }
+    } else {
+      doc.progressText = 'Đang nhận diện chữ trong ảnh…';
+      doc.progressPct = 30;
+      renderFileList();
+      const worker = await getWorker();
+      const result = await worker.recognize(doc.file);
+      doc.progressPct = 100;
+      doc.pages.push({ page: 1, text: (result.data.text || '').trim(), source: 'ocr' });
+    }
+  }
+
+  // ---------- Render file list ----------
+  function renderFileList(){
+    if(docs.length === 0){ filelistEl.innerHTML = ''; return; }
+    filelistEl.innerHTML = docs.map(function(d){
+      let statusHtml;
+      if(d.status === 'wait'){
+        statusHtml = '<span class="fstatus wait">Đang chờ</span>';
+      } else if(d.status === 'busy'){
+        statusHtml = '<span class="fstatus busy">Đang đọc…</span>';
+      } else if(d.status === 'done'){
+        statusHtml = '<span class="fstatus done">Xong</span>';
+      } else {
+        statusHtml = '<span class="fstatus err">Lỗi</span>';
+      }
+      const bar = d.status === 'busy'
+        ? '<div class="fbar"><i style="width:' + (d.progressPct||0) + '%"></i></div>'
+        : '';
+      return '<div class="filerow">' +
+        '<div class="tab">' + (d.kind === 'pdf' ? '📄' : '🖼️') + '</div>' +
+        '<div class="fmeta">' +
+          '<div class="fname" title="' + esc(d.name) + '">' + esc(d.name) + '</div>' +
+          '<div class="fsub">' + esc(d.progressText || '') + '</div>' +
+          bar +
+        '</div>' +
+        statusHtml +
+        '<button class="frm" data-id="' + d.id + '" title="Gỡ file">✕</button>' +
+      '</div>';
+    }).join('');
+    filelistEl.querySelectorAll('.frm').forEach(function(btn){
+      btn.addEventListener('click', function(){ removeDoc(btn.getAttribute('data-id')); });
+    });
+  }
+
+  // ---------- Search ----------
+  let searchTimer = null;
+  searchInput.addEventListener('input', function(){
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(runSearch, 180);
+  });
+  ignoreDiacriticsEl.addEventListener('change', runSearch);
+  matchCaseEl.addEventListener('change', runSearch);
+  searchInput.addEventListener('focus', function(){ searchbox.classList.add('focus'); });
+  searchInput.addEventListener('blur', function(){ searchbox.classList.remove('focus'); });
+
+  document.addEventListener('keydown', function(e){
+    if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f'){
+      e.preventDefault();
+      searchInput.focus();
+      searchInput.select();
+    } else if(e.key === 'Enter' && document.activeElement === searchInput){
+      if(e.shiftKey) gotoHit(currentIdx - 1); else gotoHit(currentIdx + 1);
+    }
+  });
+
+  prevBtn.addEventListener('click', function(){ gotoHit(currentIdx - 1); });
+  nextBtn.addEventListener('click', function(){ gotoHit(currentIdx + 1); });
+
+  function runSearch(){
+    const q = searchInput.value.trim();
+    currentHits = [];
+    currentIdx = -1;
+
+    if(!q){
+      navbtns.style.display = 'none';
+      resultsEl.innerHTML = '<div class="results-empty"><b>Chưa có kết quả</b>Tải file lên và nhập từ khoá để bắt đầu tìm kiếm.</div>';
+      return;
+    }
+
+    const ignoreCase = !matchCaseEl.checked;
+    const ignoreDia = ignoreDiacriticsEl.checked;
+    const nq = norm(q, ignoreCase, ignoreDia);
+
+    if(!nq){ return; }
+
+    const groups = [];
+
+    docs.forEach(function(doc){
+      if(doc.status !== 'done' && doc.status !== 'busy') return;
+      const pageHits = [];
+      doc.pages.forEach(function(pg){
+        const ntext = norm(pg.text, ignoreCase, ignoreDia);
+        let idx = 0, found;
+        const positions = [];
+        while((found = ntext.indexOf(nq, idx)) !== -1){
+          positions.push(found);
+          idx = found + Math.max(nq.length, 1);
+        }
+        positions.forEach(function(pos){
+          const start = Math.max(0, pos - 45);
+          const end = Math.min(pg.text.length, pos + nq.length + 45);
+          const before = esc(pg.text.slice(start, pos));
+          const match = esc(pg.text.slice(pos, pos + nq.length));
+          const after = esc(pg.text.slice(pos + nq.length, end));
+          const snippet = (start > 0 ? '… ' : '') + before + '<mark class="MK">' + match + '</mark>' + after + (end < pg.text.length ? ' …' : '');
+          const hitIndex = currentHits.length;
+          currentHits.push({ docId: doc.id, page: pg.page });
+          pageHits.push({ page: pg.page, source: pg.source, snippet: snippet, hitIndex: hitIndex, fullText: pg.text, pos: pos, len: nq.length });
+        });
+      });
+      if(pageHits.length){
+        groups.push({ doc: doc, hits: pageHits });
+      }
+    });
+
+    if(currentHits.length === 0){
+      navbtns.style.display = 'none';
+      resultsEl.innerHTML = '<div class="results-empty"><b>Không tìm thấy</b>Không có kết quả nào khớp với "' + esc(q) + '".</div>';
+      return;
+    }
+
+    navbtns.style.display = 'flex';
+    navcount.textContent = '1/' + currentHits.length;
+
+    let html = '<div class="summary">Tìm thấy ' + currentHits.length + ' kết quả trong ' + groups.length + ' file</div>';
+    groups.forEach(function(g){
+      html += '<div class="group"><div class="grouphead">' + (g.doc.kind === 'pdf' ? '📄' : '🖼️') + ' ' + esc(g.doc.name) + ' <span class="n">' + g.hits.length + '</span></div>';
+      g.hits.forEach(function(h){
+        const loc = g.doc.kind === 'pdf' ? 'Trang ' + h.page + (h.source === 'ocr' ? ' · nhận diện OCR' : '') : (h.source === 'ocr' ? 'Nhận diện OCR' : '');
+        html += '<div class="hit" id="hit-' + h.hitIndex + '" data-idx="' + h.hitIndex + '">' +
+          '<div class="loc">' + esc(loc) + '</div>' +
+          '<div class="snip">' + h.snippet + '</div>' +
+          '</div>';
+      });
+      html += '</div>';
+    });
+    resultsEl.innerHTML = html;
+
+    resultsEl.querySelectorAll('.hit').forEach(function(el){
+      el.addEventListener('click', function(){
+        const idx = parseInt(el.getAttribute('data-idx'), 10);
+        if(el.querySelector('.full')){
+          el.querySelector('.full').remove();
+          gotoHit(idx, false);
+          return;
+        }
+        gotoHit(idx, false);
+        const group = groups.find(function(g){ return g.hits.some(function(h){ return h.hitIndex === idx; }); });
+        const h = group.hits.find(function(h){ return h.hitIndex === idx; });
+        const full = document.createElement('div');
+        full.className = 'full';
+        const before = esc(h.fullText.slice(0, h.pos));
+        const match = esc(h.fullText.slice(h.pos, h.pos + h.len));
+        const after = esc(h.fullText.slice(h.pos + h.len));
+        full.innerHTML = before + '<mark>' + match + '</mark>' + after;
+        el.appendChild(full);
+      });
+    });
+
+    gotoHit(0, true);
+  }
+
+  function gotoHit(idx, skipScroll){
+    if(currentHits.length === 0) return;
+    if(idx < 0) idx = currentHits.length - 1;
+    if(idx >= currentHits.length) idx = 0;
+    currentIdx = idx;
+    navcount.textContent = (idx+1) + '/' + currentHits.length;
+    document.querySelectorAll('.hit').forEach(function(el){ el.classList.remove('active'); });
+    document.querySelectorAll('mark.MK').forEach(function(m){ m.classList.remove('cur'); });
+    const el = document.getElementById('hit-' + idx);
+    if(el){
+      el.classList.add('active');
+      const mk = el.querySelector('mark.MK');
+      if(mk) mk.classList.add('cur');
+      if(!skipScroll){
+        el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      }
+    }
+  }
+
+})();
+</script>
+</body>
+</html>
